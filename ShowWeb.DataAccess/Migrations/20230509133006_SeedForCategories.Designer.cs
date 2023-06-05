@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using ShowWeb.Data;
+using ShowWeb.DataAccess.Data;
 
 #nullable disable
 
-namespace ShowWeb.Migrations
+namespace ShowWeb.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230509133006_SeedForCategories")]

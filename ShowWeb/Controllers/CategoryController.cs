@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ShowWeb.Data;
+using ShowWeb.DataAccess.Data;
 using ShowWeb.Models;
+
 
 namespace ShowWeb.Controllers;
 

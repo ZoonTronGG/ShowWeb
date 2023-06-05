@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShowWeb.Models;
 
-namespace ShowWeb.Data;
+namespace ShowWeb.DataAccess.Data;
 
 public class ApplicationDbContext : DbContext
 {

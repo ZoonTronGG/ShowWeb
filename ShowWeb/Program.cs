@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using ShowWeb.Data;
+using ShowWeb.DataAccess.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
