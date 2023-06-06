@@ -1,21 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ShowWeb.DataAccess.Data;
+using ShowWeb.DataAccess.Repository.IRepository;
 using ShowWeb.Models;
 
+namespace ShowWeb.Areas.Admin.Controllers;
 
-namespace ShowWeb.Controllers;
-
+[Area("Admin")]
 public class CategoryController : Controller
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CategoryController(ApplicationDbContext db)
+    public CategoryController(IUnitOfWork unitOfWork)
     {
-        _db = db;
+        _unitOfWork = unitOfWork;
     }
     public IActionResult Index()
     {
-        var categories = _db.Categories.ToList();
+        var categories = _unitOfWork.Category.GetAll().ToList();
         return View(categories);
     }
     
@@ -31,8 +31,8 @@ public class CategoryController : Controller
         //     ModelState.AddModelError("Name", "Name and Display Order cannot be the same");
         // }
         if (!ModelState.IsValid) return View(obj);
-        _db.Categories.Add(obj);
-        _db.SaveChanges();
+        _unitOfWork.Category.Add(obj);
+        _unitOfWork.Save();
         TempData["Success"] = "The category has been added successfully";
         return RedirectToAction("Index");
     }
@@ -43,7 +43,7 @@ public class CategoryController : Controller
         {
             return NotFound();
         }
-        var obj = _db.Categories.Find(id);
+        var obj = _unitOfWork.Category.Get(u => u.Id == id);
         if (obj == null) return NotFound();
         return View(obj);
     }
@@ -52,8 +52,8 @@ public class CategoryController : Controller
     public IActionResult Edit(Category obj)
     {
         if (!ModelState.IsValid) return View(obj);
-        _db.Categories.Update(obj);
-        _db.SaveChanges();
+        _unitOfWork.Category.Update(obj);
+        _unitOfWork.Save();
         TempData["Success"] = "The category has been updated successfully";
         return RedirectToAction("Index");
     }
@@ -64,7 +64,7 @@ public class CategoryController : Controller
         {
             return NotFound();
         }
-        var obj = _db.Categories.Find(id);
+        var obj = _unitOfWork.Category.Get(u => u.Id == id);;
         if (obj == null) return NotFound();
         return View(obj);
     }
@@ -72,10 +72,10 @@ public class CategoryController : Controller
     [HttpPost, ActionName("Delete")]
     public IActionResult DeletePost(int? id)
     {
-        var category = _db.Categories.Find(id);
+        var category = _unitOfWork.Category.Get(u => u.Id == id);
         if (category == null) return NotFound();
-        _db.Categories.Remove(category);
-        _db.SaveChanges();
+        _unitOfWork.Category.Remove(category);
+        _unitOfWork.Save();
         TempData["Success"] = "The category has been deleted successfully";
         return RedirectToAction("Index");
     }
