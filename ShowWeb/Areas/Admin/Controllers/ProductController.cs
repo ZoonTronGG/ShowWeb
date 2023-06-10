@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ShowWeb.DataAccess.Repository.IRepository;
 using ShowWeb.Models;
+using ShowWeb.Models.ViewModels;
 
 namespace ShowWeb.Areas.Admin.Controllers;
 
@@ -20,52 +21,51 @@ public class ProductController : Controller
         return View(products);
     }
     
-    public IActionResult Create()
+    public IActionResult Upsert(int? id)
     {
         IEnumerable<SelectListItem> categoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem
         {
             Text = i.Name,
             Value = i.Id.ToString()
         });
-        ViewBag.CategoryList = categoryList;
+        // ViewBag.CategoryList = categoryList;
         // ViewData["CategoryList"] = categoryList;
-        return View();
-    }
-    [HttpPost]
-    public IActionResult Create(Product obj)
-    {
-        // if (obj.Name == obj.DisplayOrder.ToString())
-        // {
-        //     ModelState.AddModelError("Name", "Name and Display Order cannot be the same");
-        // }
-        if (!ModelState.IsValid) return View(obj);
-        _unitOfWork.Product.Add(obj);
-        _unitOfWork.Save();
-        TempData["Success"] = "The product has been added successfully";
-        return RedirectToAction("Index");
-    }
-
-    public IActionResult Edit(int? id)
-    {
+        var productVM = new ProductVM
+        {
+            Product = new Product(),
+            CategoryList = categoryList
+        };
         if (id is null or 0)
         {
-            return NotFound();
+            // create
+            return View(productVM);
         }
-        var obj = _unitOfWork.Product.Get(u => u.Id == id);
-        if (obj == null) return NotFound();
-        return View(obj);
+        // update
+        productVM.Product = _unitOfWork.Product.Get(u => u.Id == id);
+        return View(productVM);
+
+    }
+    [HttpPost]
+    public IActionResult Upsert(ProductVM productVM, IFormFile? file)
+    {
+        if (ModelState.IsValid)
+        {
+            _unitOfWork.Product.Add(productVM.Product);
+            _unitOfWork.Save();
+            TempData["Success"] = "The product has been created successfully";
+            return RedirectToAction("Index");
+        }
+        // ViewBag.CategoryList = categoryList;
+        // ViewData["CategoryList"] = categoryList;
+        productVM.CategoryList = _unitOfWork.Category.GetAll().Select(i => new SelectListItem
+        {
+            Text = i.Name,
+            Value = i.Id.ToString()
+        });
+        return View(productVM);
+
     }
 
-    [HttpPost]
-    public IActionResult Edit(Product obj)
-    {
-        if (!ModelState.IsValid) return View(obj);
-        _unitOfWork.Product.Update(obj);
-        _unitOfWork.Save();
-        TempData["Success"] = "The product has been updated successfully";
-        return RedirectToAction("Index");
-    }
-    
     public IActionResult Delete(int? id)
     {
         if (id is null or 0)
