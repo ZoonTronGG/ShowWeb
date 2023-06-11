@@ -16,16 +16,27 @@ public class Repository<T> : IRepository<T> where T : class
         dbSet = _db.Set<T>(); // this is the same as db.Categories == dbSet
     }
 
-    public IEnumerable<T> GetAll()
+    public IEnumerable<T> GetAll(string? includeProperties = null)
     {
         IQueryable<T> query = dbSet;
-        return dbSet.ToList();
+        if (string.IsNullOrEmpty(includeProperties)) return query.ToList();
+        foreach (var includeProp in includeProperties
+                     .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
+        {
+            query = query.Include(includeProp);
+        }
+        return query.ToList();
     }
-
-    public T Get(Expression<Func<T, bool>> filter)
+    public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null)
     {
         IQueryable<T> query = dbSet;
         query = query.Where(filter);
+        if (string.IsNullOrEmpty(includeProperties)) return query.FirstOrDefault();
+        foreach (var includeProp in includeProperties
+                     .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
+        {
+            query = query.Include(includeProp);
+        }
         return query.FirstOrDefault();
     }
 
