@@ -20,6 +20,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ShowWeb.DataAccess\ShowWeb.DataAccess.csproj" />
+      <ProjectReference Include="..\ShowWeb.Utility\ShowWeb.Utility.csproj" />
     </ItemGroup>
 
     <ItemGroup>
