@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShowWeb.DataAccess.Data;
@@ -11,9 +12,11 @@ using ShowWeb.DataAccess.Data;
 namespace ShowWeb.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230616130058_AddedCompany")]
+    partial class AddedCompany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -297,38 +300,6 @@ namespace ShowWeb.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Companies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "132 Main St",
-                            City = "New York",
-                            Name = "Tech Solution",
-                            PhoneNumber = "1234567890",
-                            PostalCode = "10001",
-                            State = "NY"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Address = "132 Main St",
-                            City = "New York",
-                            Name = "Super Tech Solution",
-                            PhoneNumber = "1234567890",
-                            PostalCode = "10001",
-                            State = "NY"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Address = "132 Main St",
-                            City = "New York",
-                            Name = "Mega Tech Solution",
-                            PhoneNumber = "1234567890",
-                            PostalCode = "10001",
-                            State = "NY"
-                        });
                 });
 
             modelBuilder.Entity("ShowWeb.Models.Product", b =>

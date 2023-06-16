@@ -5,16 +5,16 @@ using ShowWeb.Models;
 
 namespace ShowWeb.DataAccess.Repository;
 
-public class CategoryRepository : Repository<Category>, ICategoryRepository
+public class CompanyRepository : Repository<Company>, ICompanyRepository
 {
     private readonly ApplicationDbContext _db;
-    public CategoryRepository(ApplicationDbContext db) : base(db)
+    public CompanyRepository(ApplicationDbContext db) : base(db)
     {
         _db = db;
     }
 
-    public void Update(Category category)
+    public void Update(Company company)
     {
-        _db.Categories.Update(category);
+        _db.Companies.Update(company);
     }
 }
