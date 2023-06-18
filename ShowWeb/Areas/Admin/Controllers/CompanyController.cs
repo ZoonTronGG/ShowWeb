@@ -37,7 +37,7 @@ public class CompanyController : Controller
 
     }
     [HttpPost]
-    public IActionResult Upsert(Company company, IFormFile? file)
+    public IActionResult Upsert(Company company)
     {
         if (!ModelState.IsValid) return View(company);
         if(company.Id == 0)
