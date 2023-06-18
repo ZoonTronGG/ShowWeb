@@ -14,6 +14,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     
     public DbSet<Category> Categories { get; set; }
     public DbSet<Product> Products { get; set; }
+    public DbSet<Company> Companies { get; set; }
     public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,5 +66,36 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 ImageUrl = "https://nout.kz/upload/resize_cache/webp/iblock/d16/Screenshot_1.webp"
             }
         );
+        modelBuilder.Entity<Company>().HasData(
+            new Company
+            {
+                Id = 1,
+                Name = "Tech Solution",
+                Address = "132 Main St",
+                City = "New York",
+                State = "NY",
+                PostalCode = "10001",
+                PhoneNumber = "1234567890",
+            },
+            new Company
+            {
+                Id = 2,
+                Name = "Super Tech Solution",
+                Address = "132 Main St",
+                City = "New York",
+                State = "NY",
+                PostalCode = "10001",
+                PhoneNumber = "1234567890",
+            },
+            new Company
+            {
+                Id = 3,
+                Name = "Mega Tech Solution",
+                Address = "132 Main St",
+                City = "New York",
+                State = "NY",
+                PostalCode = "10001",
+                PhoneNumber = "1234567890",
+            });
     }
 }
