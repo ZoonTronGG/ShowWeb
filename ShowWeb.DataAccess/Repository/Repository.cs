@@ -16,9 +16,10 @@ public class Repository<T> : IRepository<T> where T : class
         dbSet = _db.Set<T>(); // this is the same as db.Categories == dbSet
     }
 
-    public IEnumerable<T> GetAll(string? includeProperties = null)
+    public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
     {
         IQueryable<T> query = dbSet;
+        if (filter != null) query = query.Where(filter);
         if (string.IsNullOrEmpty(includeProperties)) return query.ToList();
         foreach (var includeProp in includeProperties
                      .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
@@ -27,9 +28,10 @@ public class Repository<T> : IRepository<T> where T : class
         }
         return query.ToList();
     }
-    public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null)
+    public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null,
+        bool tracked = false)
     {
-        IQueryable<T> query = dbSet;
+        IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
         query = query.Where(filter);
         if (string.IsNullOrEmpty(includeProperties)) return query.FirstOrDefault();
         foreach (var includeProp in includeProperties
