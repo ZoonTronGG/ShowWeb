@@ -1,0 +1,72 @@
+@model ShoppingCartVM
+<form method="post">
+    <div class="card shadow border-0">
+        <div class="card-header bg-secondary bg-gradient text-light ml-0 py-4">
+            <div class="row px-4">
+                <div class="col-6">
+                    <h5 class="pt-2 text-white">Shopping Cart</h5>
+                </div>
+            </div>
+        </div>
+        <div class="card-body my-4">
+            <div class="row mb-3 pb-3">
+                <div class="col-md-2 offset-md-1">
+                    <a asp-area="Customer" asp-controller="Home" asp-action="Index" class="btn btn-outline-primary text-uppercase btn-sm">Continue Shopping</a>
+                </div>
+                @foreach (var item in Model.ShoppingCartList)
+                {
+                    <div class="col-md-10 offset-md-1">
+                        <div class="row border-bottom pb-3">
+                            <div class="d-none d-lg-block col-lg-1 text-center py-2">
+                                <img src="@item.Product.ImageUrl" class="rounded" width="100%"/>
+                            </div>
+                            <div class="col-12 col-lg-6 pt-md-3">
+                                <strong class="text-uppercase text-secondary">@item.Product.Title</strong>
+                                <p><small>
+                                    @Html.Raw(item.Product.Description)
+                                </small></p>
+                            </div>
+                            <div class="col-12  col-lg-5 text-center row py-2">
+                                <div class="col-3 text-md-right pt-2 pt-md-4">
+                                    <strong>@item.Price Tenge</strong> @item.Count Count
+                                </div>
+                                <div class="col-6 col-lg-6">
+                                    <div class="w-75 btn-group" role="group">
+                                        <a asp-action="Plus" asp-route-id="@item.Id" class="btn btn-outline-primary bg-gradient">
+                                            <i class="bi bi-plus-square"></i>
+                                        </a>
+                                        <a asp-action="Minus" asp-route-id="@item.Id" class="btn btn-outline-primary bg-gradient">
+                                            <i class="bi bi-dash-square"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-3 text-right">
+                                    <a asp-action="Remove" asp-route-id="@item.Id" class="btn btn-danger bg-gradient">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="card-footer bg-white border-0">
+                <div class="row">
+                    <div class="col-md-4 offset-md-4">
+                        <ul class="list-group mb-4">
+                            <li class="d-flex justify-content-between align-items-center">
+                                <span class="text-dark fw-semibold text-uppercase"> Total (USD)</span>
+                                <span class="text-dark fw-bolder">@Model.OrderTotal</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 offset-md-5">
+                        <a asp-action="Summary" class="btn btn-primary border-0 bg-gradient w-100">Summary</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
