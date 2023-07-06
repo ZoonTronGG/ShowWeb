@@ -5,7 +5,9 @@ using ShowWeb.DataAccess.Repository.IRepository;
 using ShowWeb.Models;
 using ShowWeb.Models.ViewModels;
 using ShowWeb.Utility;
+using Stripe;
 using Stripe.Checkout;
+using Product = ShowWeb.Models.Product;
 
 namespace ShowWeb.Areas.Customer.Controllers;
 
@@ -207,8 +209,21 @@ public class CartController : Controller
             }
             
             var service = new SessionService();
+            
+            var optionsForPaymentIntent = new PaymentIntentCreateOptions
+            {
+                Amount = (long)(ShoppingCartVM.OrderHeader.OrderTotal * 100),
+                Currency = "kzt",
+                PaymentMethodTypes = new List<string>
+                {
+                    "card",
+                },
+            };
+
+            var paymentService = new PaymentIntentService();
+            var paymentIntent = paymentService.Create(optionsForPaymentIntent);
             var session = service.Create(options);
-            _unitOfWork.OrderHeader.UpdateStripePaymentId(ShoppingCartVM.OrderHeader.Id, session.Id, session.PaymentIntentId);
+            _unitOfWork.OrderHeader.UpdateStripePaymentId(ShoppingCartVM.OrderHeader.Id, session.Id, paymentIntent.Id);
             _unitOfWork.Save();
             
             Response.Headers.Add("Location", session.Url);
@@ -222,12 +237,16 @@ public class CartController : Controller
         var orderHeader = _unitOfWork.OrderHeader.Get(o => o.Id == id);
         if (orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
         {
-            var service = new SessionService();
-            var session = service.Get(orderHeader.SessionId);
+            var sessionService = new SessionService();
+            var session = sessionService.Get(orderHeader.SessionId);
+            
+            var paymentService = new PaymentIntentService();
+            var paymentIntent = paymentService.Get(orderHeader.PaymentIntentId);
+
             if (session.Status.ToLower() == "paid")
             {
                 _unitOfWork.OrderHeader.UpdateStripePaymentId(ShoppingCartVM.OrderHeader.Id,
-                    session.Id, session.PaymentIntentId);
+                    session.Id, paymentIntent.Id);
                 _unitOfWork.OrderHeader.UpdateStatus(id, SD.StatusApproved, SD.PaymentStatusApproved);
                 _unitOfWork.Save();
             }
