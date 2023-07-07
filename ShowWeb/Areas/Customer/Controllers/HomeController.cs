@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShowWeb.DataAccess.Repository.IRepository;
 using ShowWeb.Models;
+using ShowWeb.Utility;
 
 namespace ShowWeb.Areas.Customer.Controllers;
 
@@ -21,6 +22,14 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        var claimsIdentity = (ClaimsIdentity)User.Identity;
+        var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim != null)
+        {
+            var count = _unitOfWork.ShoppingCart
+                .GetAll(c => c.ApplicationUserId == claim.Value).Count();
+            HttpContext.Session.SetInt32(SD.SessionCart, count);
+        }
         var productList = _unitOfWork.Product.GetAll(includeProperties: nameof(Product.Category));
         return View(productList);
     }
@@ -51,6 +60,7 @@ public class HomeController : Controller
             // shopping cart item already exists
             shoppingCartFromDb.Count += shoppingCart.Count;
             _unitOfWork.ShoppingCart.Update(shoppingCartFromDb);
+            _unitOfWork.Save();
         }
         else
         {
@@ -61,6 +71,11 @@ public class HomeController : Controller
                 shoppingCart.Id = 0;
             }
             _unitOfWork.ShoppingCart.Add(shoppingCart);
+            _unitOfWork.Save();
+            HttpContext.Session.SetInt32(SD.SessionCart, 
+                _unitOfWork.ShoppingCart
+                .GetAll(s => s.ApplicationUserId == userId
+                          && s.ProductId == shoppingCart.ProductId).Count());
         }
         TempData["Success"] = "Cart updated successfully";
         _unitOfWork.Save();

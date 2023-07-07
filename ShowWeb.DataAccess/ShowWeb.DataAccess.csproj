@@ -18,6 +18,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ShowWeb.Models\ShowWeb.Models.csproj" />
+      <ProjectReference Include="..\ShowWeb.Utility\ShowWeb.Utility.csproj" />
     </ItemGroup>
 
 </Project>
