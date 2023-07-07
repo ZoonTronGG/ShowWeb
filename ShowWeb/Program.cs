@@ -4,6 +4,7 @@ using ShowWeb.DataAccess.Repository;
 using ShowWeb.DataAccess.Repository.IRepository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using ShowWeb.DataAccess.DbInitializer;
 using ShowWeb.Utility;
 using Stripe;
 
@@ -25,10 +26,24 @@ builder.Services.ConfigureApplicationCookie(options =>
         options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
     }
 );
+builder.Services.AddAuthentication().AddFacebook(options =>
+{
+    options.AppId = "237479822420979";
+    options.AppSecret = "390a7e746d3407e248b8c02e9742fd93";
+});
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddRazorPages();
-// Adding the dependency injection for the CategoryRepository
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 // I guess PostgreSQL is not compatible with the new timestamp behavior
 // So if I had all Entities with DateTimeOffset properties, I would not have a problem
@@ -51,10 +66,18 @@ StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey"
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession();
+await SeedDatabase();
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",
     pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+async Task SeedDatabase()
+{
+    using var serviceScope = app.Services.CreateScope();
+    var dbInitializer = serviceScope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await dbInitializer.Initialize();
+}
