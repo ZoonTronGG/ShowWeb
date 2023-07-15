@@ -136,7 +136,7 @@ public class OrderController : Controller
         OrderVM.OrderDetails = _unitOfWork.OrderDetails.GetAll(o => o.OrderHeaderId == OrderVM.OrderHeader.Id,
             includeProperties: nameof(Product));
         
-        const string domain = "https://localhost:7228/";
+        var domain = Request.Scheme + "://" + Request.Host.Value + "/";
         var options = new SessionCreateOptions
         {
             SuccessUrl = domain + "Admin/Order/PaymentConfirmation?id=" + OrderVM.OrderHeader.Id,

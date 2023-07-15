@@ -185,7 +185,7 @@ public class CartController : Controller
         if (applicationUser.CompanyId.GetValueOrDefault() != 0)
             return RedirectToAction(nameof(OrderConfirmation), "Cart", new { id = ShoppingCartVM.OrderHeader.Id });
         {
-            const string domain = "https://localhost:7228/";
+            var domain = Request.Scheme + "://" + Request.Host.Value + "/";
             var options = new SessionCreateOptions
             {
                 SuccessUrl = domain + "Customer/Cart/OrderConfirmation?id=" + ShoppingCartVM.OrderHeader.Id,
