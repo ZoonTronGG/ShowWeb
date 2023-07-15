@@ -74,7 +74,7 @@ public class CompanyController : Controller
     [HttpGet]
     public IActionResult GetAll()
     {
-        var allObj = _unitOfWork.Company.GetAll();
+        var allObj = _unitOfWork.Company.GetAll().ToList();
         return Json(new { data = allObj });
     }
     
