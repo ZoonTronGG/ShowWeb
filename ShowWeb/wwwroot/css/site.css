@@ -545,3 +545,15 @@ bg-success {
   border-color: #578553;
 }
 
+.custom-indicator {
+  background-color: #ff0000;
+}
+
+.custom-indicator.active {
+  background-color: #00ff00;
+}
+
+.carousel-control-next-icon,
+.carousel-control-prev-icon {
+  filter: invert(1);
+}

@@ -30,12 +30,15 @@ public class HomeController : Controller
                 .GetAll(c => c.ApplicationUserId == claim.Value).Count();
             HttpContext.Session.SetInt32(SD.SessionCart, count);
         }
-        var productList = _unitOfWork.Product.GetAll(includeProperties: nameof(Product.Category));
+        var productList = _unitOfWork.Product
+            .GetAll(includeProperties: nameof(Product.Category) + "," + nameof(Product.ProductImages));
         return View(productList);
     }
     public IActionResult Details(int id)
     {
-        var productFromDb = _unitOfWork.Product.Get(u => u.Id == id, includeProperties: nameof(Product.Category));
+        var productFromDb = _unitOfWork.Product
+            .Get(u => u.Id == id,
+                includeProperties: nameof(Product.Category) + "," + nameof(Product.ProductImages));
         var shoppingCart = new ShoppingCart()
         {
             Product = productFromDb,

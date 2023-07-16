@@ -35,9 +35,14 @@ public class CartController : Controller
                 includeProperties: nameof(Product)),
             OrderHeader = new OrderHeader()
         };
+        
+        var productImages = _unitOfWork.ProductImage.GetAll();
 
         foreach (var cart in ShoppingCartVM.ShoppingCartList)
         {
+            cart.Product.ProductImages = productImages
+                .Where(p => p.ProductId == cart.ProductId)
+                .ToList();
             cart.Price = GetPriceBasedOnQuantity(cart);
             ShoppingCartVM.OrderHeader.OrderTotal += cart.Price * cart.Count;
         }
