@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using ShowWeb.DataAccess.Data;
+using ShowWeb.DataAccess.Repository.IRepository;
 using ShowWeb.Models;
 using ShowWeb.Models.ViewModels;
 using ShowWeb.Utility;
@@ -14,13 +14,16 @@ namespace ShowWeb.Areas.Admin.Controllers;
 [Authorize(Roles = SD.Role_Admin)]
 public class UserController : Controller
 {
-    private readonly ApplicationDbContext _db;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+    public UserController(UserManager<IdentityUser> userManager,
+        RoleManager<IdentityRole> roleManager, IUnitOfWork unitOfWork)
     {
-        _db = db;
         _userManager = userManager;
+        _roleManager = roleManager;
+        _unitOfWork = unitOfWork;
     }
 
     public IActionResult Index()
@@ -30,65 +33,65 @@ public class UserController : Controller
 
     public async Task<IActionResult> RoleManagement(string id)
     {
-        var role = await _db.UserRoles
-            .FirstOrDefaultAsync(u => u.UserId == id);
-
         var RoleVM = new RoleManagementVM()
         {
-            ApplicationUser = (await _db.ApplicationUsers
-                .Include(u => u.Company)
-                .FirstOrDefaultAsync(u => u.Id == id))!,
-            RolesList = await _db.Roles.Select(i => new SelectListItem
+            ApplicationUser = _unitOfWork.ApplicationUser
+                .Get(u => u.Id == id, includeProperties: nameof(Company)),
+            RolesList = await _roleManager.Roles.Select(i => new SelectListItem
             {
                 Text = i.Name,
                 Value = i.Name,
             }).ToListAsync(),
-            CompanyList = await _db.Companies.Select(i => new SelectListItem
+            CompanyList = _unitOfWork.Company.GetAll().Select(i => new SelectListItem
             {
                 Text = i.Name,
                 Value = i.Id.ToString()
-            }).ToListAsync()
+            }).ToList()
         };
 
-        if (RoleVM.ApplicationUser != null)
-            RoleVM.ApplicationUser.Role = await _db.Roles
-                .Where(u => u.Id == role.RoleId)
-                .Select(u => u.Name)
-                .FirstOrDefaultAsync();
-
+        if (RoleVM.ApplicationUser == null) return View(RoleVM);
+        var user = _unitOfWork.ApplicationUser
+            .Get(u => u.Id == id);
+        RoleVM.ApplicationUser.Role = _userManager.GetRolesAsync(user).Result.FirstOrDefault();
         return View(RoleVM);
     }
 
     [HttpPost]
-    public async Task<IActionResult> RoleManagement(RoleManagementVM roleManagementVM)
+    public async Task<IActionResult> RoleManagement(RoleManagementVM roleManagmentVM)
     {
-        var role = await _db.UserRoles
-            .FirstOrDefaultAsync(u => u.UserId == roleManagementVM.ApplicationUser.Id);
-        var oldRole = await _db.Roles
-            .FirstOrDefaultAsync(u => role != null && u.Id == role.RoleId);
-        
-        if (roleManagementVM.ApplicationUser.Role == oldRole?.Name) return RedirectToAction(nameof(Index));
-        
-        var applicationUser = await _db.ApplicationUsers
-            .FirstOrDefaultAsync(u => u.Id == roleManagementVM.ApplicationUser.Id);
-        if (roleManagementVM.ApplicationUser.Role == SD.Role_Company)
+        var oldRole = _userManager
+            .GetRolesAsync(_unitOfWork.ApplicationUser.Get(u => u.Id == roleManagmentVM.ApplicationUser.Id))
+            .Result
+            .FirstOrDefault();
+
+        var applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == roleManagmentVM.ApplicationUser.Id);
+
+
+        if (roleManagmentVM.ApplicationUser.Role != oldRole) {
+
+            if (roleManagmentVM.ApplicationUser.Role == SD.Role_Company) {
+                applicationUser.CompanyId = roleManagmentVM.ApplicationUser.CompanyId;
+            }
+            if (oldRole == SD.Role_Company) {
+                applicationUser.CompanyId = null;
+            }
+            _unitOfWork.ApplicationUser.Update(applicationUser);
+            _unitOfWork.Save();
+
+            await _userManager.RemoveFromRoleAsync(applicationUser, oldRole);
+            await _userManager.AddToRoleAsync(applicationUser, roleManagmentVM.ApplicationUser.Role);
+
+        }
+        else
         {
-            if (applicationUser != null) applicationUser.CompanyId = roleManagementVM.ApplicationUser.CompanyId;
+            if (oldRole != SD.Role_Company || applicationUser.CompanyId == roleManagmentVM.ApplicationUser.CompanyId)
+                return RedirectToAction("Index");
+            applicationUser.CompanyId = roleManagmentVM.ApplicationUser.CompanyId;
+            _unitOfWork.ApplicationUser.Update(applicationUser);
+            _unitOfWork.Save();
         }
 
-        if (oldRole?.Name == SD.Role_Company)
-        {
-            if (applicationUser != null) applicationUser.CompanyId = null;
-        }
-
-        await _db.SaveChangesAsync();
-
-        if (applicationUser == null) return RedirectToAction(nameof(Index));
-        
-        await _userManager.RemoveFromRoleAsync(applicationUser, oldRole?.Name);
-        await _userManager.AddToRoleAsync(applicationUser, roleManagementVM.ApplicationUser.Role);
-
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction("Index");
     }
 
     #region API CALLS
@@ -96,22 +99,11 @@ public class UserController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var allObj = await _db.ApplicationUsers
-            .Include(u => u.Company)
-            .ToListAsync();
-
-        var userRoles = await _db.UserRoles
-            .ToListAsync();
-        var roles = await _db.Roles
-            .ToListAsync();
-
+        var allObj = _unitOfWork.ApplicationUser
+            .GetAll(includeProperties: nameof(Company)).ToList();
         foreach (var user in allObj)
         {
-            var roleId = userRoles
-                .FirstOrDefault(u => u.UserId == user.Id)?.RoleId;
-
-            user.Role = roles
-                .FirstOrDefault(u => u.Id == roleId)?.Name;
+            user.Role = _userManager.GetRolesAsync(user).Result.FirstOrDefault();
             user.Company ??= new Company()
             {
                 Name = ""
@@ -124,8 +116,8 @@ public class UserController : Controller
     [HttpPost]
     public async Task<IActionResult> LockUnlock([FromBody] string id)
     {
-        var objFromDb = await _db.ApplicationUsers
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var objFromDb = _unitOfWork.ApplicationUser
+            .Get(u => u.Id == id);
         if (objFromDb == null)
         {
             return Json(new { success = false, message = "Error while Locking/Unlocking" });
@@ -140,8 +132,9 @@ public class UserController : Controller
         {
             objFromDb.LockoutEnd = DateTime.Now.AddYears(1000);
         }
-
-        await _db.SaveChangesAsync();
+        
+        _unitOfWork.ApplicationUser.Update(objFromDb);
+        _unitOfWork.Save();
         return Json(new { success = true, message = "Operation successful" });
     }
 
